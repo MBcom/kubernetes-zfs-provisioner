@@ -44,11 +44,11 @@ func (p ZFSProvisioner) Provision(options controller.VolumeOptions) (*v1.Persist
 
 	*/
 
-	serverHostname, ok := options.Parameters["serverHostname"]
+	//serverHostname, ok := options.Parameters["serverHostname"]
 
-	if !ok {
+	/*if !ok {
 		return nil, errors.New("Missing parameter serverHostname in storageClass")
-	}
+	}*/
 
 	zfsPath, path, err := p.createVolume(options)
 
@@ -63,7 +63,7 @@ func (p ZFSProvisioner) Provision(options controller.VolumeOptions) (*v1.Persist
 	annotations := make(map[string]string)
 	annotations[annDataset] = zfsPath
 
-	pv := &v1.PersistentVolume{
+/*	pv := &v1.PersistentVolume{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        options.PVName,
 			Labels:      map[string]string{},
@@ -83,6 +83,26 @@ func (p ZFSProvisioner) Provision(options controller.VolumeOptions) (*v1.Persist
 				},
 			},
 		},
+	}*/
+
+	pv := &v1.PersistentVolume{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        options.PVName,
+				Labels:      map[string]string{},
+				Annotations: annotations,
+			},
+			Spec: v1.PersistentVolumeSpec{
+				PersistentVolumeReclaimPolicy: options.PersistentVolumeReclaimPolicy,
+				AccessModes:                   options.PVC.Spec.AccessModes,
+				Capacity: v1.ResourceList{
+					v1.ResourceName(v1.ResourceStorage): options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
+				},
+				PersistentVolumeSource: v1.PersistentVolumeSource{
+					HostPath: &v1.HostPathVolumeSource{
+						Path: path,
+					},
+				},
+			},
 	}
 
 	log.Debug("Returning pv:")
@@ -108,7 +128,7 @@ func (p ZFSProvisioner) createVolume(options controller.VolumeOptions) (string, 
 	}
 
 	// retrieve the shareOptions
-	shareOptions, ok := options.Parameters["shareOptions"]
+	//shareOptions, ok := options.Parameters["shareOptions"]
 
 	if !ok {
 		return "", "", errors.New("Missing parameter shareOptions in storageClass")
@@ -132,7 +152,7 @@ func (p ZFSProvisioner) createVolume(options controller.VolumeOptions) (string, 
 	zfsPath := parentDataset + "/" + options.PVName
 	properties := make(map[string]string)
 
-	properties["sharenfs"] = shareOptions
+	//properties["sharenfs"] = shareOptions
 
 	storageRequest := options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)]
 	storageRequestBytes := strconv.FormatInt(storageRequest.Value(), 10)
