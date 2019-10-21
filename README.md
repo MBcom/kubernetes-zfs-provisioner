@@ -1,6 +1,6 @@
 # kubernetes-zfs-provisioner
 
-zfs-provisioner is an out of cluster external provisioner for Kubernetes. It creates ZFS datasets and shares them via NFS to make them mountable to pods. Currently all ZFS attributes are inherited from the parent dataset, different storage classes for e.g. cached/non-cached datasets or manually setting attributes via annotations should follow in the future. This provisioner is considered highly **experimental** and is still under development.
+zfs-provisioner is an out of cluster external provisioner for Kubernetes. It creates ZFS datasets and shares them via the `local` Storage mode (to decrease the number of NFS connections needed to your storage node). To make them mountable to pods you have mount the zpool on every cluster node by editing your `/etc/fstab` file. Currently all ZFS attributes are inherited from the parent dataset, different storage classes for e.g. cached/non-cached datasets or manually setting attributes via annotations should follow in the future. 
 
 For more information about external storage in kubernetes, see [kubernetes-incubator/external-storage](https://github.com/kubernetes-incubator/external-storage).
 
@@ -12,6 +12,29 @@ The provisioner can be configured via the following environment variables:
 | `ZFS_PROVISIONER_NAME` | Name of the provisioner. Change only if you want to run multiple instances. | `creamfinance.com/zfs` |
 | `ZFS_KUBE_CONF` | Path to the kubernetes config file which will be used to connect to the cluster. |`kube.conf` |
 | `ZFS_METRICS_PORT` | Port on which to export Prometheus metrics. | `8080` |
+
+## Installation
+### Ubuntu/ Debian
+To install the provisioner on one of your storage nodes copy the `zfs-provisioner.service` file to `/etc/systemd/system/` and run
+```bash
+systemctl enable zfs-provisioner.service
+systemctl start zfs-provisioner.service
+```
+Please ensure that the node can comunicate to your Kubernetes API Server and copy (if not already done) your `/etc/kubernetes/admin.conf` from a master node to your storage node.
+On all nodes add the following line to your `/etc/fstab`:
+```
+<storage-node-ip>:/zpool9/ /zpool9/ nfs rw,vers=4,soft,bg 0 0
+```
+If you have not already installed NFS modules, run:
+```bash
+sudo apt update
+sudo apt install -y nfs-common 
+```
+Now you can enable your storage mount by running:
+```bash
+sudo mkdir -p /zpool9/
+sudo mount -a
+```
 
 ## Notes
 ### Annotations

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 	"errors"
+        "os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/kubernetes-sigs/sig-storage-lib-external-provisioner/controller"
@@ -164,6 +165,12 @@ func (p ZFSProvisioner) createVolume(options controller.VolumeOptions) (string, 
 
 	dataset, err := zfs.CreateFilesystem(zfsPath, properties)
 
+	if err != nil {
+		return "", "", fmt.Errorf("Creating ZFS dataset failed with: %v", err.Error())
+	}
+
+	//setting permissions to dataset - so unprivelegd containers can start without errors
+	err = os.Chmod("/" + zfsPath, 0777)
 	if err != nil {
 		return "", "", fmt.Errorf("Creating ZFS dataset failed with: %v", err.Error())
 	}
