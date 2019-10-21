@@ -19,12 +19,6 @@
   revision = "b965b613227fddccbfffe13eae360ed3fa822f8d"
 
 [[projects]]
-  branch = "master"
-  name = "github.com/creamfinance/kubernetes-zfs-provisioner"
-  packages = ["pkg/provisioner"]
-  revision = "fdd6d975171325d92592efdc54ec921963275dd4"
-
-[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "5215b55f46b2b919f50a1df0eaa5886afe4e3b3d"
@@ -122,6 +116,12 @@
   name = "github.com/matttproud/golang_protobuf_extensions"
   packages = ["pbutil"]
   revision = "fc2b8d3a73c4867e51861bbdd5ae3c1f0869dd6a"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/mbcom/kubernetes-zfs-provisioner"
+  packages = ["pkg/provisioner"]
+  revision = "4d5fac7566cba6302abc7f965175047921a6791c"
 
 [[projects]]
   name = "github.com/miekg/dns"
@@ -337,6 +337,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "30041df9ed986821c72b7aa3563958dbd45401369144a750a510878d141e5233"
+  inputs-digest = "ada7ed2da3d5c3cf849923d3c9dbe5776908374ee3d13d06b2323ce0471d0911"
   solver-name = "gps-cdcl"
   solver-version = 1

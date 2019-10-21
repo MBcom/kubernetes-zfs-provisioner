@@ -17,7 +17,9 @@ func (p ZFSProvisioner) Delete(volume *v1.PersistentVolume) error {
 		return err
 	}
 
-	log.Info("Deleted volume")
+	log.WithFields(log.Fields{
+		"volume": volume.Spec.NFS.Path,
+	}).Info("Deleted volume")
 	return nil
 }
 
@@ -32,13 +34,19 @@ func (p ZFSProvisioner) deleteVolume(volume *v1.PersistentVolume) error {
 	if !ok {
 		return fmt.Errorf("Unable to find dataset annotation")
 	}
-        log.Info(datasetName)
+
+	log.WithFields(log.Fields{
+		"datasetName": datasetName,
+		"volume": volume,
+	}).Info("Parent Dataset")
 
 	// retrieve the dataset
-	preDataset, err := zfs.GetDataset(p.options.Parameters["parentDataset"] + "/" + datasetName)
+	preDataset, err := zfs.GetDataset(datasetName)
 
 	if err != nil {
-		return fmt.Errorf("Unable to get dataset")
+		// it's probably already deleted here, just log
+		fmt.Printf("Unable to get dataset: %v", err)
+		return nil
 	}
 
 	var dataset *zfs.Dataset
@@ -62,6 +70,10 @@ func (p ZFSProvisioner) deleteVolume(volume *v1.PersistentVolume) error {
 	if err != nil {
 		return fmt.Errorf("Deleting ZFS dataset failed with: %v", err.Error())
 	}
+
+
+
+
 
 	return nil
 }
