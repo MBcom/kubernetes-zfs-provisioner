@@ -6,9 +6,10 @@ import (
 	"strconv"
 	"errors"
         "os"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/kubernetes-sigs/sig-storage-lib-external-provisioner/controller"
+	"sigs.k8s.io/sig-storage-lib-external-provisioner/controller"
 	zfs "github.com/simt2/go-zfs"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/api/core/v1"
@@ -19,7 +20,7 @@ const (
 )
 
 // Provision creates a PersistentVolume, sets quota and shares it via NFS.
-func (p ZFSProvisioner) Provision(options controller.VolumeOptions) (*v1.PersistentVolume, error) {
+func (p ZFSProvisioner) Provision(options controller.ProvisionOptions) (*v1.PersistentVolume, error) {
 
 	log.WithFields(log.Fields{
 		"data": options,
@@ -93,7 +94,7 @@ func (p ZFSProvisioner) Provision(options controller.VolumeOptions) (*v1.Persist
 				Annotations: annotations,
 			},
 			Spec: v1.PersistentVolumeSpec{
-				PersistentVolumeReclaimPolicy: options.PersistentVolumeReclaimPolicy,
+				PersistentVolumeReclaimPolicy: *options.StorageClass.ReclaimPolicy,
 				AccessModes:                   options.PVC.Spec.AccessModes,
 				Capacity: v1.ResourceList{
 					v1.ResourceName(v1.ResourceStorage): options.PVC.Spec.Resources.Requests[v1.ResourceName(v1.ResourceStorage)],
@@ -113,9 +114,9 @@ func (p ZFSProvisioner) Provision(options controller.VolumeOptions) (*v1.Persist
 }
 
 // createVolume creates a ZFS dataset and returns its mount path
-func (p ZFSProvisioner) createVolume(options controller.VolumeOptions) (string, string, error) {
+func (p ZFSProvisioner) createVolume(options controller.ProvisionOptions) (string, string, error) {
 	// retrieve the parent zfs name
-	parentDataset, ok := options.Parameters["parentDataset"];
+	parentDataset, ok := options.StorageClass.Parameters["parentDataset"];
 
 	if !ok {
 		return "", "", errors.New("Missing parameter parentDataset in storageClass")
@@ -137,7 +138,7 @@ func (p ZFSProvisioner) createVolume(options controller.VolumeOptions) (string, 
 
 	// retrieve the overProvision setting
 	overProvision := false
-	overProvision_str, ok := options.Parameters["overProvision"]
+	overProvision_str, ok := options.StorageClass.Parameters["overProvision"]
 
 	if ok {
 		switch overProvision_str {
@@ -166,7 +167,15 @@ func (p ZFSProvisioner) createVolume(options controller.VolumeOptions) (string, 
 	dataset, err := zfs.CreateFilesystem(zfsPath, properties)
 
 	if err != nil {
-		return "", "", fmt.Errorf("Creating ZFS dataset failed with: %v", err.Error())
+		if !strings.Contains(err.Error(),"dataset already exists"){
+		     return "", "", fmt.Errorf("Creating ZFS dataset failed with: %v", err.Error())
+		} else {
+			dataset2, err2 := zfs.GetDataset(zfsPath)
+			dataset = dataset2
+			if err2 != nil {
+				return "", "", fmt.Errorf("Creating ZFS dataset failed with: %v", err2.Error())
+			}
+	        }
 	}
 
 	//setting permissions to dataset - so unprivelegd containers can start without errors

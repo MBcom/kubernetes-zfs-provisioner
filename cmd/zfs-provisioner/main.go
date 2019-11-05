@@ -12,7 +12,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 //	"github.com/mbcom/kubernetes-zfs-provisioner/pkg/provisioner"
         "kubernetes-zfs-provisioner/pkg/provisioner"
-	"github.com/kubernetes-sigs/sig-storage-lib-external-provisioner/controller"
+	"sigs.k8s.io/sig-storage-lib-external-provisioner/controller"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	// "github.com/simt2/go-zfs"
